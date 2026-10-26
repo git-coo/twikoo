@@ -1,32 +1,25 @@
 import twikoo from "twikoo-netlify";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Max-Age": "86400"
-};
-
 export default async (event, context) => {
-  // 单独处理 OPTIONS 预检请求（解决跨域核心）
+  const origin = event.headers.origin || "";
+  const allowOrigin = "http://coobk.com"; // 改成你的域名！
+
+  const headers = {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400"
+  };
+
+  // 预检OPTIONS单独返回
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 204,
-      headers: corsHeaders
+      headers
     };
   }
 
-  let res;
-  try {
-    res = await twikoo.handler(event, context);
-  } catch (err) {
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: err.message })
-    };
-  }
-  // 追加跨域头
-  res.headers = { ...corsHeaders, ...res.headers };
+  const res = await twikoo.handler(event, context);
+  res.headers = { ...headers, ...res.headers };
   return res;
 };
